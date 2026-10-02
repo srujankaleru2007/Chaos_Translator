@@ -1,114 +1,47 @@
 "use client";
 
-import React, { useState } from 'react';
-import { UploadSection } from '@/components/UploadSection';
-import { Dashboard } from '@/components/Dashboard';
-import { MessageSquare, LayoutDashboard, Github, Gamepad2 } from 'lucide-react';
-import { MemoryGame } from '@/components/MemoryGame';
+import { useState } from "react";
+
+type ExtractedItem = { kind: string; text: string; confidence: number; evidence_quote: string };
+type ExtractionResult = { summary: string; items: ExtractedItem[] };
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function Home() {
-  const [data, setData] = useState<any>(null);
-  const [selectedUser, setSelectedUser] = useState<string>('Overall');
+  const [sourceText, setSourceText] = useState("");
+  const [sourceType, setSourceType] = useState("whatsapp");
+  const [fileName, setFileName] = useState("");
+  const [result, setResult] = useState<ExtractionResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
-  const [showGame, setShowGame] = useState(false);
-  const [processingComplete, setProcessingComplete] = useState(false);
-  const [processingError, setProcessingError] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleDataLoaded = (analyticsData: any) => {
-    setData(analyticsData);
-    setSelectedUser('Overall');
-    setLoading(false);
-    setShowUpload(false);
-  };
+  async function handleFile(file: File) {
+    setFileName(file.name);
+    setSourceType(file.name.toLowerCase().endsWith(".txt") ? "whatsapp" : "document");
+    setSourceText(await file.text());
+    setResult(null);
+    setError("");
+  }
 
-  return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-indigo-500/30 overflow-x-hidden">
-      {/* Header */}
-      <header className="border-b border-zinc-800/50 bg-[#09090b]/80 backdrop-blur-md sticky top-0 z-50 transition-all duration-300">
-        <div className="max-w-[1600px] mx-auto px-3 md:px-6 md:[@media(pointer:coarse)]:px-10 h-14 md:h-16 md:[@media(pointer:coarse)]:h-24 flex items-center justify-between">
-          <div className="flex items-center gap-2 md:gap-2.5 md:[@media(pointer:coarse)]:gap-4">
-            <div className="w-6 h-6 md:w-7 md:h-7 md:[@media(pointer:coarse)]:w-10 md:[@media(pointer:coarse)]:h-10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <img src="/chatlytics.png" alt="Chatlytics Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-lg md:text-xl md:[@media(pointer:coarse)]:text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">
-              Chatlytics
-            </span>
-          </div>
+  async function extract() {
+    if (!sourceText.trim()) { setError("Add a source first by uploading a file or pasting text."); return; }
+    setLoading(true); setError(""); setResult(null);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/inference/test`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: sourceText, source_type: sourceType }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Extraction failed.");
+      setResult(payload);
+    } catch (err) { setError(err instanceof Error ? err.message : "Could not reach the Chaos Translator API."); }
+    finally { setLoading(false); }
+  }
 
-          <div className="flex items-center gap-4 md:gap-6 md:[@media(pointer:coarse)]:gap-10">
-            <nav className="flex items-center gap-4 md:gap-6 md:[@media(pointer:coarse)]:gap-10 text-sm md:[@media(pointer:coarse)]:text-xl font-medium text-zinc-400">
-              <button
-                onClick={() => data && setShowUpload(false)}
-                className={`flex items-center gap-2 md:[@media(pointer:coarse)]:gap-3 transition-colors ${!showUpload && data ? 'text-indigo-400' : 'hover:text-white'} cursor-pointer`}
-                disabled={!data}
-                aria-label="Dashboard"
-              >
-                <LayoutDashboard className="w-4 h-4 md:[@media(pointer:coarse)]:w-6 md:[@media(pointer:coarse)]:h-6" />
-                <span className="hidden md:inline">Dashboard</span>
-              </button>
-              <button
-                onClick={() => setShowGame(true)}
-                className="flex items-center gap-2 md:[@media(pointer:coarse)]:gap-3 transition-colors hover:text-fuchsia-400 cursor-pointer group"
-                aria-label="Play Game"
-              >
-                <Gamepad2 className="w-5 h-5 md:[@media(pointer:coarse)]:w-7 md:[@media(pointer:coarse)]:h-7 group-hover:scale-110 transition-transform" />
-                <span className="hidden md:inline">Play</span>
-              </button>
-            </nav>
-            <div className="h-4 md:[@media(pointer:coarse)]:h-8 w-[1px] bg-zinc-800" />
-            <a href="https://github.com/alexcj10/chatlytics" target="_blank" rel="noreferrer" className="text-zinc-400 hover:text-white transition-colors">
-              <Github className="w-5 h-5 md:[@media(pointer:coarse)]:w-7 md:[@media(pointer:coarse)]:h-7" />
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-[1600px] mx-auto px-3 md:px-6 py-6 md:py-8">
-        {!data || showUpload ? (
-          <div className="min-h-[calc(100dvh-140px)] w-full flex flex-col items-center justify-center py-8">
-            <UploadSection
-              onDataLoaded={handleDataLoaded}
-              loading={loading}
-              setLoading={setLoading}
-              setShowGame={setShowGame}
-              processingComplete={processingComplete}
-              setProcessingComplete={setProcessingComplete}
-              processingError={processingError}
-              setProcessingError={setProcessingError}
-            />
-          </div>
-        ) : (
-          <div>
-            <Dashboard
-              data={data.analytics[selectedUser]}
-              user={selectedUser}
-              users={data.users}
-              onSelectUser={setSelectedUser}
-              onReset={() => setShowUpload(true)}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* Memory Game Overlay */}
-      {showGame && (
-        <MemoryGame
-          isProcessing={loading}
-          processingComplete={processingComplete}
-          processingError={processingError}
-          onExit={() => {
-            setShowGame(false);
-            setProcessingComplete(false);
-            setProcessingError(false);
-          }}
-          onViewDashboard={() => {
-            setShowGame(false);
-            setProcessingComplete(false);
-            setProcessingError(false);
-          }}
-        />
-      )}
-    </div>
-  );
+  return <main className="min-h-screen bg-[#f6f7f3] text-[#1d2924]">
+    <header className="border-b border-[#dfe6df] bg-[#f6f7f3]/90 px-6 py-5 backdrop-blur md:px-12"><div className="mx-auto flex max-w-7xl items-center justify-between"><div className="flex items-center gap-3 font-semibold tracking-tight"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#28523d] text-lg text-white">✣</span><span>The Chaos Translator</span></div><span className="rounded-full border border-[#cbdacd] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#557061]">Gemma · local</span></div></header>
+    <section className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-[0.9fr_1.1fr] md:px-12 md:py-24"><div><p className="font-mono text-xs uppercase tracking-[0.2em] text-[#6b8a74]">Turn scattered information into clarity</p><h1 className="mt-5 max-w-xl text-5xl font-semibold leading-[0.98] tracking-[-0.05em] md:text-7xl">Find what matters inside the mess.</h1><p className="mt-7 max-w-lg text-base leading-7 text-[#68776d]">Upload a conversation or paste a source. Gemma identifies tasks, deadlines, decisions, people, and questions—while preserving the evidence behind each one.</p><div className="mt-10 flex gap-8 text-sm text-[#617268]"><span><b className="block text-xl text-[#28523d]">01</b>Upload a source</span><span><b className="block text-xl text-[#28523d]">02</b>Extract intelligence</span><span><b className="block text-xl text-[#28523d]">03</b>Keep the evidence</span></div></div>
+      <div className="rounded-2xl border border-[#dbe5dc] bg-white p-5 shadow-[0_20px_60px_rgba(47,75,56,0.08)] md:p-7"><div className="flex items-center justify-between"><div><p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#72907b]">Source intake</p><h2 className="mt-2 text-2xl font-semibold">Translate the chaos</h2></div><span className="text-2xl text-[#9bb6a0]">↗</span></div><label className="mt-7 block cursor-pointer rounded-xl border border-dashed border-[#b9cdbd] bg-[#f7faf6] p-5 transition hover:border-[#6b9977] hover:bg-[#f2f8f2]"><input type="file" className="sr-only" accept=".txt,.md,.csv" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} /><span className="block text-sm font-medium">{fileName || "Drop a WhatsApp export or text file"}</span><span className="mt-1 block text-xs text-[#7c8b80]">TXT, MD, and CSV for this foundation step</span></label><div className="my-5 flex items-center gap-3 text-[10px] font-mono uppercase tracking-widest text-[#98a59b]"><span className="h-px flex-1 bg-[#e5ebe5]" />or paste text<span className="h-px flex-1 bg-[#e5ebe5]" /></div><textarea value={sourceText} onChange={e => { setSourceText(e.target.value); setFileName(""); }} placeholder="Rahul will prepare the presentation. The deadline is October 8…" className="min-h-36 w-full resize-y rounded-xl border border-[#dce5dc] bg-[#fbfcfa] p-4 text-sm leading-6 outline-none transition placeholder:text-[#a3afa5] focus:border-[#76a181]" /><div className="mt-4 flex items-center justify-between gap-4"><span className="text-xs text-[#7d8b81]">Content stays in your configured local pipeline.</span><button onClick={extract} disabled={loading} className="rounded-lg bg-[#28523d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1d402e] disabled:cursor-wait disabled:opacity-60">{loading ? "Gemma is reading…" : "Extract intelligence  ↗"}</button></div>{error && <div className="mt-5 rounded-lg border border-[#efc9c4] bg-[#fff4f1] p-3 text-sm text-[#a24e45]">{error}</div>}</div>
+    </section>
+    {result && <section className="mx-auto max-w-7xl px-6 pb-20 md:px-12"><div className="rounded-2xl border border-[#dbe5dc] bg-white p-6 md:p-8"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#72907b]">Structured intelligence</p><h2 className="mt-2 text-3xl font-semibold tracking-tight">Here&apos;s what surfaced.</h2><p className="mt-3 max-w-2xl text-[#68776d]">{result.summary}</p></div><span className="rounded-full bg-[#e7f1e8] px-3 py-1 font-mono text-[10px] uppercase tracking-widest text-[#477157]">{result.items.length} evidence-backed items</span></div><div className="mt-8 grid gap-4 md:grid-cols-2">{result.items.map((item, index) => <article key={`${item.kind}-${index}`} className="rounded-xl border border-[#e5ebe5] bg-[#fbfcfa] p-5"><div className="flex items-center justify-between"><span className="rounded-full bg-[#e7f1e8] px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-[#477157]">{item.kind}</span><span className="font-mono text-xs text-[#8aa18e]">{Math.round(item.confidence * 100)}%</span></div><h3 className="mt-4 text-base font-semibold">{item.text}</h3><blockquote className="mt-4 border-l-2 border-[#a8c8ac] pl-3 text-sm italic leading-6 text-[#748178]">“{item.evidence_quote}”</blockquote></article>)}</div></div></section>}
+  </main>;
 }

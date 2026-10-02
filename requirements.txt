@@ -1,10 +1,3 @@
 fastapi
 uvicorn
-pandas
-emoji
-wordcloud
-python-multipart
-scikit-learn
-joblib
-vaderSentiment
-python-dateutil
+pydantic
