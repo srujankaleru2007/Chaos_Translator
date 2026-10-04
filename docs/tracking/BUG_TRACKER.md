@@ -12,3 +12,9 @@
 | BUG-006 | Fixed | Medium | Remote Google Font dependency removed from layout. |
 
 Remaining blockers: legacy lint errors, Windows Next.js `spawn EPERM`, and missing production auth/isolation.
+## 2026-10-04 updates
+
+- Fixed: typed claims now require source-supported evidence and receive deterministic line/message locators.
+- Fixed: frontend no longer hides typed categories behind the legacy `items` list.
+- Open: full synthetic WhatsApp inference can exceed the current 180-second test window; chunking is the next recommended feature.
+- Open: legacy frontend lint failures and Windows Next.js worker `spawn EPERM` remain.

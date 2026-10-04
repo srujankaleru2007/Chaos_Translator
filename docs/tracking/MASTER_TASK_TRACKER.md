@@ -9,3 +9,14 @@
 - [ ] Resolve remaining legacy frontend lint errors.
 - [ ] Resolve Windows Next.js TypeScript worker `spawn EPERM`.
 - [ ] Add production authentication, workspace isolation, rate limiting, and upload controls.
+
+## Structured intelligence completeness (Phases 3–6)
+
+- [x] Generate deterministic source line/message locators from validated evidence quotes.
+- [x] Reject fabricated evidence for typed and legacy claims.
+- [x] Return typed categories with uncertainty and empty-category states.
+- [x] Render all typed categories and expandable evidence in the active frontend.
+- [x] Add contradiction side-by-side display and resolution status.
+- [x] Add schema/evidence regression tests.
+- [x] Document the response contract and verification results.
+- [ ] Add deterministic chunking/aggregation for long sources over the current inference budget.

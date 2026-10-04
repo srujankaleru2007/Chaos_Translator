@@ -93,7 +93,12 @@ class OllamaProvider:
             "messages": [
                 {
                     "role": "system",
-                    "content": "Extract only information directly supported by the source. Return JSON only.",
+                    "content": (
+                        "Extract only information directly supported by the source. "
+                        "Never infer a person, owner, date, status, or resolution that is not stated. "
+                        "Return JSON only. Every claim must include at least one exact evidence quote "
+                        "copied from the source. Use empty arrays when a category is not present."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],
