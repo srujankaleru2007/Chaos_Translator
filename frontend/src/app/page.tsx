@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type ExtractedItem = { kind: string; text: string; confidence: number; evidence_quote: string };
-type ExtractionResult = { summary: string; items: ExtractedItem[] };
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { extractIntelligence, MAX_SOURCE_LENGTH, type ExtractionResult } from "@/lib/api";
 
 export default function Home() {
   const [sourceText, setSourceText] = useState("");
@@ -24,15 +21,10 @@ export default function Home() {
 
   async function extract() {
     if (!sourceText.trim()) { setError("Add a source first by uploading a file or pasting text."); return; }
+    if (sourceText.length > MAX_SOURCE_LENGTH) { setError(`Source text must be ${MAX_SOURCE_LENGTH.toLocaleString()} characters or fewer.`); return; }
     setLoading(true); setError(""); setResult(null);
     try {
-      const response = await fetch(`${API_URL}/api/v1/inference/test`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sourceText, source_type: sourceType }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail || "Extraction failed.");
-      setResult(payload);
+      setResult(await extractIntelligence(sourceText, sourceType));
     } catch (err) { setError(err instanceof Error ? err.message : "Could not reach the Chaos Translator API."); }
     finally { setLoading(false); }
   }

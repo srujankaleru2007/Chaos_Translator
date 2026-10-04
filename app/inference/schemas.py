@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ExtractedItem(BaseModel):
@@ -16,3 +16,10 @@ class ExtractionResult(BaseModel):
 class ExtractionRequest(BaseModel):
     text: str = Field(min_length=1, max_length=30_000)
     source_type: str = "text"
+
+    @field_validator("text")
+    @classmethod
+    def reject_blank_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("text must contain non-whitespace characters")
+        return value

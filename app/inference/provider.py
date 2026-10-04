@@ -1,5 +1,7 @@
 import asyncio
 import json
+import logging
+import time
 from dataclasses import dataclass
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -8,9 +10,15 @@ from pydantic import BaseModel, ValidationError
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 class ProviderError(RuntimeError):
-    """A user-actionable inference provider failure."""
+    """A categorized inference provider failure."""
+
+    def __init__(self, message: str, *, category: str = "provider_error"):
+        super().__init__(message)
+        self.category = category
 
 
 @dataclass(frozen=True)
@@ -21,11 +29,22 @@ class OllamaStatus:
     configured_model_available: bool
 
 
+@dataclass(frozen=True)
+class InferenceDiagnostics:
+    active_model: str
+    fallback_activated: bool
+    fallback_reason: str | None
+    duration_ms: float
+    validation_outcome: str
+    retry_count: int
+
+
 class OllamaProvider:
-    def __init__(self, base_url: str | None = None, model: str | None = None, timeout: float | None = None):
+    def __init__(self, base_url: str | None = None, model: str | None = None, timeout: float | None = None, max_tokens: int | None = None):
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
-        self.model = model or settings.ollama_model
+        self.model = model or settings.ai_primary_model
         self.timeout = timeout or settings.ollama_timeout_seconds
+        self.max_tokens = max_tokens or settings.inference_max_tokens
 
     def _request(self, method: str, path: str, payload: dict | None = None) -> dict:
         body = None if payload is None else json.dumps(payload).encode("utf-8")
@@ -40,15 +59,16 @@ class OllamaProvider:
                 return json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
-            raise ProviderError(f"Ollama returned HTTP {exc.code}: {detail[:500]}") from exc
+            category = "model_missing" if exc.code == 404 else "ollama_http_error"
+            raise ProviderError(f"Ollama returned HTTP {exc.code}: {detail[:500]}", category=category) from exc
         except URLError as exc:
             raise ProviderError(
                 f"Cannot connect to Ollama at {self.base_url}. Start Ollama and verify the service URL."
-            ) from exc
+            , category="ollama_unavailable") from exc
         except TimeoutError as exc:
-            raise ProviderError(f"Ollama timed out after {self.timeout:g} seconds.") from exc
+            raise ProviderError(f"Ollama timed out after {self.timeout:g} seconds.", category="timeout") from exc
         except json.JSONDecodeError as exc:
-            raise ProviderError("Ollama returned invalid JSON.") from exc
+            raise ProviderError("Ollama returned invalid JSON.", category="ollama_protocol") from exc
 
     async def status(self) -> OllamaStatus:
         payload = await asyncio.to_thread(self._request, "GET", "/api/tags")
@@ -66,7 +86,7 @@ class OllamaProvider:
             available = ", ".join(status.available_models) or "none"
             raise ProviderError(
                 f"Configured Ollama model '{self.model}' is not installed. Available models: {available}."
-            )
+                , category="model_missing")
 
         payload = {
             "model": self.model,
@@ -78,14 +98,16 @@ class OllamaProvider:
                 {"role": "user", "content": prompt},
             ],
             "stream": False,
+            "think": False,
             "format": schema,
-            "options": {"temperature": 0},
+            "options": {"temperature": 0, "num_predict": self.max_tokens},
         }
         result = await asyncio.to_thread(self._request, "POST", "/api/chat", payload)
         content = result.get("message", {}).get("content")
         if not isinstance(content, str) or not content.strip():
-            raise ProviderError("Ollama returned no message content.")
+            raise ProviderError("Ollama returned no message content.", category="empty_output")
         try:
             return response_model.model_validate_json(content)
         except (ValidationError, ValueError) as exc:
-            raise ProviderError(f"Gemma returned invalid structured output: {exc}") from exc
+            category = "truncated_output" if not content.rstrip().endswith(("}", "]")) else "invalid_structured_output"
+            raise ProviderError(f"Gemma returned invalid structured output: {exc}", category=category) from exc
