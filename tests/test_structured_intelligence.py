@@ -18,7 +18,7 @@ def test_structured_categories_preserve_exact_evidence():
     )
     checked = _validate_evidence(result, "Asha owns the API work\nFix the endpoint")
     assert checked.people[0].evidence[0].line_start == 1
-    assert checked.tasks[0].evidence[0].message_index == 2
+    assert checked.tasks[0].evidence[0].line_start == 2
 
 
 def test_unsupported_evidence_is_rejected():
@@ -37,3 +37,13 @@ def test_empty_categories_are_valid():
     result = ExtractionResult(summary="No actionable intelligence")
     assert result.people == []
     assert result.contradictions == []
+
+
+@pytest.mark.parametrize("claim_data", [
+    {"text": "Unowned task", "confidence": 0.6, "evidence": [{"quote": "Unowned task"}]},
+    {"text": "Deadline on October 10", "confidence": 0.7, "evidence": [{"quote": "Deadline on October 10"}]},
+])
+def test_missing_owner_or_time_remains_optional(claim_data):
+    task = TaskClaim.model_validate(claim_data)
+    assert task.owner is None
+    assert task.due_date is None

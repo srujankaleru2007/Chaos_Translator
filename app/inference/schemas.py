@@ -10,12 +10,14 @@ class EvidenceRef(BaseModel):
     line_start: int | None = Field(default=None, ge=1)
     line_end: int | None = Field(default=None, ge=1)
     timestamp: str | None = None
+    page_number: int | None = Field(default=None, ge=1)
 
 
 class IntelligenceClaim(BaseModel):
     text: str = Field(min_length=1)
     confidence: float = Field(ge=0, le=1)
     evidence: list[EvidenceRef] = Field(default_factory=list, min_length=1, max_length=5)
+    uncertain: bool = False
 
 
 class PersonClaim(IntelligenceClaim):
@@ -27,15 +29,22 @@ class TaskClaim(IntelligenceClaim):
     owner: str | None = None
     status: str | None = None
     due_date: str | None = None
+    priority: str | None = None
+    dependencies: list[str] = Field(default_factory=list, max_length=10)
 
 
 class DeadlineClaim(IntelligenceClaim):
     date_or_time: str | None = None
     owner: str | None = None
+    deadline_type: str | None = None
+    timezone: str | None = None
+    confirmation_status: str | None = None
 
 
 class DecisionClaim(IntelligenceClaim):
     decision: str = Field(min_length=1)
+    decided_by: str | None = None
+    decided_at: str | None = None
 
 
 class QuestionClaim(IntelligenceClaim):
@@ -46,17 +55,23 @@ class QuestionClaim(IntelligenceClaim):
 class TechnicalIssueClaim(IntelligenceClaim):
     impact: str | None = None
     status: str | None = None
+    component: str | None = None
+    resolution: str | None = None
 
 
 class DependencyClaim(IntelligenceClaim):
     depends_on: str = Field(min_length=1)
     blocked: bool = False
+    dependent_task: str | None = None
+    relationship: str | None = None
 
 
 class ContradictionClaim(IntelligenceClaim):
     claim_a: str = Field(min_length=1)
     claim_b: str = Field(min_length=1)
     resolution: str | None = None
+    resolution_status: str = "unresolved"
+    authoritative_claim: str | None = None
 
 
 class ExtractedItem(BaseModel):

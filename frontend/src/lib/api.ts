@@ -1,15 +1,15 @@
 export const MAX_SOURCE_LENGTH = 30_000;
 export type ExtractionItem = { kind: string; text: string; confidence: number; evidence_quote: string };
-export type EvidenceRef = { quote: string; source_id: string; message_index?: number | null; line_start?: number | null; line_end?: number | null; timestamp?: string | null };
-export type IntelligenceClaim = { text: string; confidence: number; evidence: EvidenceRef[] };
+export type EvidenceRef = { quote: string; source_id: string; message_index?: number | null; line_start?: number | null; line_end?: number | null; timestamp?: string | null; page_number?: number | null };
+export type IntelligenceClaim = { text: string; confidence: number; evidence: EvidenceRef[]; uncertain?: boolean };
 export type PersonClaim = IntelligenceClaim & { name: string; role?: string | null };
-export type TaskClaim = IntelligenceClaim & { owner?: string | null; status?: string | null; due_date?: string | null };
-export type DeadlineClaim = IntelligenceClaim & { date_or_time?: string | null; owner?: string | null };
-export type DecisionClaim = IntelligenceClaim & { decision: string };
+export type TaskClaim = IntelligenceClaim & { owner?: string | null; status?: string | null; due_date?: string | null; priority?: string | null; dependencies?: string[] };
+export type DeadlineClaim = IntelligenceClaim & { date_or_time?: string | null; owner?: string | null; deadline_type?: string | null; timezone?: string | null; confirmation_status?: string | null };
+export type DecisionClaim = IntelligenceClaim & { decision: string; decided_by?: string | null; decided_at?: string | null };
 export type QuestionClaim = IntelligenceClaim & { answered: boolean; answer?: string | null };
-export type TechnicalIssueClaim = IntelligenceClaim & { impact?: string | null; status?: string | null };
-export type DependencyClaim = IntelligenceClaim & { depends_on: string; blocked: boolean };
-export type ContradictionClaim = IntelligenceClaim & { claim_a: string; claim_b: string; resolution?: string | null };
+export type TechnicalIssueClaim = IntelligenceClaim & { impact?: string | null; status?: string | null; component?: string | null; resolution?: string | null };
+export type DependencyClaim = IntelligenceClaim & { depends_on: string; blocked: boolean; dependent_task?: string | null; relationship?: string | null };
+export type ContradictionClaim = IntelligenceClaim & { claim_a: string; claim_b: string; resolution?: string | null; resolution_status: string; authoritative_claim?: string | null };
 export type ExtractionResult = {
   summary: string; items: ExtractionItem[]; people: PersonClaim[]; tasks: TaskClaim[];
   deadlines: DeadlineClaim[]; decisions: DecisionClaim[]; questions: QuestionClaim[];

@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 
 from fastapi import APIRouter, HTTPException
@@ -11,6 +12,29 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+WHATSAPP_MESSAGE = re.compile(r"^(?P<timestamp>\d{1,2}[/:.-]\d{1,2}[/:.-]\d{2,4}[^-]*?)\s+-\s+(?P<author>[^:]+):\s+(?P<body>.*)$")
+
+
+def _evidence_locator(quote: str, source: str):
+    normalized_quote = " ".join(quote.split()).casefold()
+    if not normalized_quote:
+        return None
+    lines = source.splitlines()
+    for line_number, line in enumerate(lines, start=1):
+        if normalized_quote in " ".join(line.split()).casefold():
+            match = WHATSAPP_MESSAGE.match(line.strip())
+            return {
+                "quote": line.strip() if quote.strip() == line.strip() else quote.strip(),
+                "source_id": "source-1",
+                "line_start": line_number,
+                "line_end": line_number,
+                "message_index": sum(1 for prior in lines[:line_number] if WHATSAPP_MESSAGE.match(prior.strip())) or None,
+                "timestamp": match.group("timestamp").strip() if match else None,
+                "page_number": None,
+            }
+    return None
+
+
 def _validate_evidence(result: ExtractionResult, source: str) -> ExtractionResult:
     """Reject model claims whose evidence is not present in the submitted source."""
     source_normalized = " ".join(source.split()).casefold()
@@ -19,14 +43,20 @@ def _validate_evidence(result: ExtractionResult, source: str) -> ExtractionResul
         "technical_issues", "dependencies", "contradictions",
     ):
         for claim in getattr(result, category):
-            valid = [evidence for evidence in claim.evidence
-                     if " ".join(evidence.quote.split()).casefold() in source_normalized]
+            valid = []
+            for evidence in claim.evidence:
+                locator = _evidence_locator(evidence.quote, source)
+                if locator:
+                    valid.append(type(evidence).model_validate(locator))
             if not valid:
                 raise ProviderError(
                     f"Model returned unsupported evidence for {category}.",
                     category="unsupported_evidence",
                 )
             claim.evidence = valid
+    for item in result.items:
+        if " ".join(item.evidence_quote.split()).casefold() not in source_normalized:
+            raise ProviderError("Model returned unsupported legacy evidence.", category="unsupported_evidence")
     return result
 
 
