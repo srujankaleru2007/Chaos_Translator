@@ -48,11 +48,6 @@ export function MemoryGame({
     const [showNotification, setShowNotification] = useState(false);
     const [gameCompleted, setGameCompleted] = useState(false);
 
-    // Initialize game
-    useEffect(() => {
-        initializeGame();
-    }, []);
-
     // Timer
     useEffect(() => {
         if (!isGameActive) return;
@@ -105,6 +100,11 @@ export function MemoryGame({
         setGameCompleted(false);
         setShowNotification(false);
     };
+
+    // Initialize game after the initializer is declared.
+    useEffect(() => {
+        initializeGame();
+    }, []);
 
     const handleCardClick = (cardId: number) => {
         if (!isGameActive) return;

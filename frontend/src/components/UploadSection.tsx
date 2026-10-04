@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, FileText, AlertCircle, Loader2, Gamepad2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { analyzeChat } from '@/lib/api';
+import { extractIntelligence, MAX_SOURCE_LENGTH, type ExtractionResult } from '@/lib/api';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -12,7 +12,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface UploadSectionProps {
-    onDataLoaded: (data: any) => void;
+    onDataLoaded: (data: ExtractionResult) => void;
     loading: boolean;
     setLoading: (loading: boolean) => void;
     setShowGame: (show: boolean) => void;
@@ -34,7 +34,7 @@ export function UploadSection({
 }: UploadSectionProps) {
     const [error, setError] = useState<string | null>(null);
     const [dragActive, setDragActive] = useState(false);
-    const ANIMATED_WORDS = ['DNA', 'Habits', 'Patterns', 'Secrets', 'Stories'];
+    const ANIMATED_WORDS = ['DNA', 'Habits', 'Patterns', 'Secrets', 'Stories'] as const;
     const [wordIndex, setWordIndex] = useState(0);
 
     useEffect(() => {
@@ -42,7 +42,7 @@ export function UploadSection({
             setWordIndex((prev) => (prev + 1) % ANIMATED_WORDS.length);
         }, 2000);
         return () => clearInterval(interval);
-    }, []);
+    }, [ANIMATED_WORDS.length]);
 
     const handleFile = async (file: File) => {
         if (!file.name.endsWith('.txt')) {
@@ -56,11 +56,16 @@ export function UploadSection({
         setLoading(true);
 
         try {
-            const result = await analyzeChat(file);
+            const text = await file.text();
+            if (!text.trim()) throw new Error('The selected file is empty.');
+            if (text.length > MAX_SOURCE_LENGTH) throw new Error(`Source text must be ${MAX_SOURCE_LENGTH.toLocaleString()} characters or fewer.`);
+            const result = await extractIntelligence(text, 'whatsapp');
             setProcessingComplete(true);
             onDataLoaded(result);
-        } catch (err: any) {
-            setError(err.message || 'Failed to analyze the chat. Please make sure the file format is correct.');
+            setLoading(false);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to analyze the chat.';
+            setError(message);
             setProcessingError(true);
             setLoading(false);
         }
