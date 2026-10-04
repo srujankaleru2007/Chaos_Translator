@@ -1,6 +1,21 @@
 export const MAX_SOURCE_LENGTH = 30_000;
 export type ExtractionItem = { kind: string; text: string; confidence: number; evidence_quote: string };
-export type ExtractionResult = { summary: string; items: ExtractionItem[] };
+export type EvidenceRef = { quote: string; source_id: string; message_index?: number | null; line_start?: number | null; line_end?: number | null; timestamp?: string | null };
+export type IntelligenceClaim = { text: string; confidence: number; evidence: EvidenceRef[] };
+export type PersonClaim = IntelligenceClaim & { name: string; role?: string | null };
+export type TaskClaim = IntelligenceClaim & { owner?: string | null; status?: string | null; due_date?: string | null };
+export type DeadlineClaim = IntelligenceClaim & { date_or_time?: string | null; owner?: string | null };
+export type DecisionClaim = IntelligenceClaim & { decision: string };
+export type QuestionClaim = IntelligenceClaim & { answered: boolean; answer?: string | null };
+export type TechnicalIssueClaim = IntelligenceClaim & { impact?: string | null; status?: string | null };
+export type DependencyClaim = IntelligenceClaim & { depends_on: string; blocked: boolean };
+export type ContradictionClaim = IntelligenceClaim & { claim_a: string; claim_b: string; resolution?: string | null };
+export type ExtractionResult = {
+  summary: string; items: ExtractionItem[]; people: PersonClaim[]; tasks: TaskClaim[];
+  deadlines: DeadlineClaim[]; decisions: DecisionClaim[]; questions: QuestionClaim[];
+  technical_issues: TechnicalIssueClaim[]; dependencies: DependencyClaim[];
+  contradictions: ContradictionClaim[];
+};
 
 export class ApiError extends Error {
   constructor(message: string, readonly status?: number, readonly category?: string) { super(message); }
