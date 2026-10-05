@@ -126,6 +126,9 @@ cd chatlytics
 ```
 
 ### Backend Setup
+Set backend secrets as server environment variables. `ELEVENLABS_API_KEY` enables the optional briefing-audio feature; analysis continues to work when it is unset. Never expose this key through a `NEXT_PUBLIC_*` variable.
+For Render, set `ELEVENLABS_API_KEY` and `CORS_ALLOWED_ORIGINS` in the backend service environment (include the deployed frontend origin). Set the frontend build variable `NEXT_PUBLIC_API_URL` to the Render backend's public URL so the browser does not fall back to localhost.
+
 ```bash
 # Install Python dependencies
 pip install -r requirements.txt
@@ -297,8 +300,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 <p align="center">
   Made with ❤️ by <a href="https://github.com/alexcj10">alexcj10</a>
 </p>
-
-
 
 
 

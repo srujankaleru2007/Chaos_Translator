@@ -5,12 +5,13 @@ import re
 import time
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+import httpx
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 
 from app.core.config import settings
 from app.inference.chunking import split_source
 from app.inference.provider import GroqProvider, OllamaProvider, ProviderError
-from app.inference.schemas import EvidenceRef, ExtractionRequest, ExtractionResult, PeopleExtractionResult, PersonClaim
+from app.inference.schemas import BriefingAudioRequest, EvidenceRef, ExtractionRequest, ExtractionResult, PeopleExtractionResult, PersonClaim
 from app.ingestion.schemas import WhatsAppIngestionRequest
 from app.ingestion.documents import MAX_DOCUMENT_SIZE_BYTES, DoclingUnavailable, DocumentIngestionError, convert_document_bytes
 from app.ingestion.images import MAX_IMAGE_SIZE_BYTES, ImageIngestionError, convert_image_bytes
@@ -33,6 +34,7 @@ def _next_groq_api_key() -> str:
     _groq_key_index += 1
     return key
 WHATSAPP_MESSAGE = re.compile(r"^(?P<timestamp>\d{1,2}[/:.-]\d{1,2}[/:.-]\d{2,4}[^-]*?)\s+-\s+(?P<author>[^:]+):\s+(?P<body>.*)$")
+ELEVENLABS_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
 
 
 def _evidence_locator(quote: str, source: str):
@@ -373,3 +375,39 @@ async def inference_test(request: ExtractionRequest) -> ExtractionResult:
     else:
         message = "Inference failed for all configured providers. Check failure categories and server logs using the correlation ID."
     raise HTTPException(status_code=503, detail={"error": "all_inference_models_failed", "message": message, "correlation_id": correlation_id, "categories": categories, "attempts": errors})
+
+
+@router.post("/briefing/audio", tags=["briefing"], response_class=Response)
+async def generate_briefing_audio(request: BriefingAudioRequest) -> Response:
+    if not settings.elevenlabs_api_key:
+        raise HTTPException(status_code=503, detail="Briefing audio is not configured.")
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0)) as client:
+            response = await client.post(
+                f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}",
+                params={"output_format": "mp3_44100_128"},
+                headers={"xi-api-key": settings.elevenlabs_api_key},
+                json={
+                    "text": request.text,
+                    "model_id": "eleven_flash_v2_5",
+                    "voice_settings": {
+                        "stability": 0.55,
+                        "similarity_boost": 0.75,
+                        "style": 0,
+                        "use_speaker_boost": True,
+                    },
+                },
+            )
+            response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.warning("briefing audio provider returned HTTP %s", exc.response.status_code)
+        raise HTTPException(status_code=502, detail="Briefing audio generation failed.") from exc
+    except httpx.RequestError as exc:
+        logger.warning("briefing audio provider request failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="Briefing audio is temporarily unavailable.") from exc
+
+    if not response.content:
+        logger.warning("briefing audio provider returned an empty response")
+        raise HTTPException(status_code=502, detail="Briefing audio generation failed.")
+    return Response(content=response.content, media_type="audio/mpeg")

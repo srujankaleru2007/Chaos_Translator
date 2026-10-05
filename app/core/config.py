@@ -29,6 +29,12 @@ class Settings:
     groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
     groq_timeout_seconds: float = float(os.getenv("GROQ_TIMEOUT_SECONDS", "60"))
     groq_max_output_tokens: int = int(os.getenv("GROQ_MAX_OUTPUT_TOKENS", "4096"))
+    elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "")
+    cors_allowed_origins: tuple[str, ...] = tuple(
+        origin.strip()
+        for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+        if origin.strip()
+    )
 
 
 settings = Settings()

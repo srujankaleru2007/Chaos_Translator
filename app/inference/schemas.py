@@ -119,3 +119,14 @@ class ExtractionRequest(BaseModel):
         if not value.strip():
             raise ValueError("text must contain non-whitespace characters")
         return value
+
+
+class BriefingAudioRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=5_000)
+
+    @field_validator("text")
+    @classmethod
+    def reject_blank_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("text must contain non-whitespace characters")
+        return value

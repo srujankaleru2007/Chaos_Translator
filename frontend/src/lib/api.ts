@@ -119,6 +119,24 @@ export async function extractIntelligence(text: string, sourceType: string, clou
   return parseExtractionResult(payload);
 }
 
+export async function generateBriefingAudio(text: string): Promise<Blob> {
+  const apiUrl = apiBaseUrl();
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl}/api/v1/briefing/audio`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  } catch {
+    throw connectionError(apiUrl);
+  }
+  if (!response.ok) throw new ApiError("Briefing audio is unavailable.", response.status, "briefing_audio_failed");
+  const audio = await response.blob();
+  if (audio.size === 0) throw new ApiError("Briefing audio is unavailable.", 502, "briefing_audio_failed");
+  return audio;
+}
+
 export async function parseWhatsAppSource(text: string, filename?: string): Promise<CanonicalWhatsAppSource> {
   const trimmed = text.trim();
   if (!trimmed) throw new ApiError("Add a WhatsApp export before parsing.", 422, "invalid_input");
