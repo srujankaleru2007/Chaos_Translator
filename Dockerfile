@@ -1,6 +1,6 @@
 
-# Use the official Python 3.9 image
-FROM python:3.9
+# The application uses Python 3.10+ type syntax; keep the runtime aligned with it.
+FROM python:3.13-slim
 
 # Set the working directory to /code
 WORKDIR /code
@@ -27,8 +27,8 @@ WORKDIR $HOME/app
 # Copy the current directory contents into the container at $HOME/app setting the owner to the user
 COPY --chown=user . $HOME/app
 
-# Expose port 7860 for Hugging Face Spaces
-EXPOSE 7860
+# Expose the API port used by local development and deployment.
+EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,5 +1,9 @@
 fastapi
 uvicorn
 pydantic
+pymongo>=4.13,<5
 pytest
-httpx2
+httpx
+python-multipart
+python-dotenv
+docling>=2.70,<3

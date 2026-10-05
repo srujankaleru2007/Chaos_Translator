@@ -16,7 +16,7 @@ class EvidenceRef(BaseModel):
 class IntelligenceClaim(BaseModel):
     text: str = Field(min_length=1)
     confidence: float = Field(ge=0, le=1)
-    evidence: list[EvidenceRef] = Field(default_factory=list, min_length=1, max_length=5)
+    evidence: list[EvidenceRef] = Field(min_length=1, max_length=5)
     uncertain: bool = False
 
 
@@ -92,11 +92,26 @@ class ExtractionResult(BaseModel):
     technical_issues: list[TechnicalIssueClaim] = Field(default_factory=list, max_length=50)
     dependencies: list[DependencyClaim] = Field(default_factory=list, max_length=50)
     contradictions: list[ContradictionClaim] = Field(default_factory=list, max_length=50)
+    provider: str | None = None
+    model: str | None = None
+    cloud_fallback_used: bool = False
+    correlation_id: str | None = None
+    partial: bool = False
+    chunks_processed: int = 1
+    chunks_total: int = 1
+    failed_chunks: list[int] = Field(default_factory=list, max_length=100)
+
+
+class PeopleExtractionResult(BaseModel):
+    """The narrow contract exposed to local Qwen name extraction."""
+
+    people: list[PersonClaim] = Field(default_factory=list, max_length=50)
 
 
 class ExtractionRequest(BaseModel):
-    text: str = Field(min_length=1, max_length=30_000)
+    text: str = Field(min_length=1, max_length=200_000)
     source_type: str = "text"
+    cloud_consent: bool = False
 
     @field_validator("text")
     @classmethod
