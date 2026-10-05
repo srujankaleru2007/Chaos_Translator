@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Neo-brutalist visual language for the active translator surface. */
+:root {
+  --neo-ink: #111827;
+  --neo-paper: #fffdf5;
+  --neo-yellow: #facc15;
+  --neo-pink: #fb7185;
+  --neo-blue: #67e8f9;
+  --neo-green: #86efac;
+}
+
 @theme inline {
   --color-brand-primary: #6366f1;
   --color-brand-secondary: #8b5cf6;
@@ -35,15 +45,258 @@
 }
 
 body {
-  background-color: var(--background);
+  background-color: #fff7d6;
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image:
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0, transparent 50%),
-    radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.03) 0, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(217, 70, 239, 0.03) 0, transparent 50%);
+  background-image: radial-gradient(#111827 1px, transparent 1px);
+  background-size: 22px 22px;
   background-attachment: fixed;
+}
+
+.neo-shell {
+  background: transparent;
+  color: var(--neo-ink);
+}
+
+.neo-shell > header {
+  border-bottom: 3px solid var(--neo-ink) !important;
+  background: var(--neo-yellow) !important;
+  backdrop-filter: none !important;
+}
+
+.neo-shell > header .rounded-full {
+  border: 2px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: var(--neo-paper);
+  color: var(--neo-ink) !important;
+  box-shadow: 3px 3px 0 var(--neo-ink);
+}
+
+.neo-shell > header .rounded-xl {
+  border: 2px solid var(--neo-ink);
+  border-radius: 0 !important;
+  background: var(--neo-pink) !important;
+  color: var(--neo-ink) !important;
+  box-shadow: 4px 4px 0 var(--neo-ink);
+}
+
+.neo-shell h1,
+.neo-shell h2,
+.neo-shell h3,
+.neo-shell button {
+  font-weight: 900;
+}
+
+.neo-shell > section:first-of-type > div:last-child,
+.neo-shell section > div.rounded-2xl,
+.neo-shell section > div.rounded-xl {
+  border: 3px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: var(--neo-paper) !important;
+  box-shadow: 9px 9px 0 var(--neo-ink) !important;
+}
+
+.neo-shell label.rounded-xl {
+  border: 3px dashed var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: var(--neo-blue) !important;
+}
+
+.neo-shell textarea {
+  border: 3px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: var(--neo-ink) !important;
+  box-shadow: 4px 4px 0 var(--neo-ink);
+}
+
+.neo-shell button {
+  border: 3px solid var(--neo-ink);
+  border-radius: 0 !important;
+  background: var(--neo-pink) !important;
+  color: var(--neo-ink) !important;
+  box-shadow: 5px 5px 0 var(--neo-ink);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.neo-shell button:hover:not(:disabled) {
+  background: var(--neo-green) !important;
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--neo-ink);
+}
+
+.neo-shell button:active:not(:disabled) {
+  transform: translate(5px, 5px);
+  box-shadow: none;
+}
+
+.neo-shell details {
+  border: 2px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: var(--neo-blue) !important;
+}
+
+.neo-shell article.rounded-xl,
+.neo-shell article.rounded-lg {
+  border: 3px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  box-shadow: 5px 5px 0 var(--neo-ink);
+}
+
+.neo-shell article.rounded-xl:nth-child(3n + 1) { background: #ffffff !important; }
+.neo-shell article.rounded-xl:nth-child(3n + 2) { background: #fef08a !important; }
+.neo-shell article.rounded-xl:nth-child(3n) { background: #bbf7d0 !important; }
+
+.neo-shell .rounded-lg.bg-\[\#fff9ed\] {
+  border: 2px solid var(--neo-ink);
+  border-radius: 0 !important;
+  background: var(--neo-pink) !important;
+}
+
+.neo-shell .rounded-lg.bg-\[\#f7faf6\] {
+  border: 2px solid var(--neo-ink);
+  border-radius: 0 !important;
+  background: #ffffff !important;
+}
+
+.neo-shell .rounded-full.bg-\[\#e7f1e8\] {
+  border: 2px solid var(--neo-ink);
+  border-radius: 0 !important;
+  background: var(--neo-green) !important;
+  color: var(--neo-ink) !important;
+  box-shadow: 3px 3px 0 var(--neo-ink);
+}
+
+.neo-shell [class*="text-[#72907b]"],
+.neo-shell [class*="text-[#6b8a74]"],
+.neo-shell [class*="text-[#477157]"] {
+  color: var(--neo-ink) !important;
+}
+
+.neo-shell [class*="text-[#68776d]"],
+.neo-shell [class*="text-[#7d8b81]"],
+.neo-shell [class*="text-[#91a097]"] {
+  color: #374151 !important;
+}
+
+.neo-shell .border-\[\#efc9c4\] {
+  border: 3px solid var(--neo-ink) !important;
+  border-radius: 0 !important;
+  background: var(--neo-pink) !important;
+  color: var(--neo-ink) !important;
+  box-shadow: 4px 4px 0 var(--neo-ink);
+}
+
+/* Neumorphic finish: soft surfaces, inset fields, and floating controls. */
+body:has(.neo-shell) {
+  background: #e8edf3;
+  background-image: none;
+}
+
+.neo-shell {
+  background: #e8edf3;
+  color: #26313d;
+}
+
+.neo-shell > header {
+  border-bottom: 0 !important;
+  background: #e8edf3 !important;
+  box-shadow: 0 8px 20px rgba(163, 177, 198, 0.32);
+}
+
+.neo-shell > header .rounded-full,
+.neo-shell > header .rounded-xl,
+.neo-shell > section:first-of-type > div:last-child,
+.neo-shell section > div.rounded-2xl,
+.neo-shell section > div.rounded-xl,
+.neo-shell article.rounded-xl,
+.neo-shell article.rounded-lg {
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: #e8edf3 !important;
+  box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.55), -12px -12px 24px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell > header .rounded-full {
+  border-radius: 999px !important;
+  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.55), -5px -5px 10px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell > header .rounded-xl {
+  border-radius: 14px !important;
+  background: #e8edf3 !important;
+  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.55), -5px -5px 10px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell label.rounded-xl {
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: #e8edf3 !important;
+  box-shadow: inset 5px 5px 10px rgba(163, 177, 198, 0.45), inset -5px -5px 10px rgba(255, 255, 255, 0.9) !important;
+}
+
+.neo-shell textarea {
+  border: 0 !important;
+  border-radius: 18px !important;
+  background: #e8edf3 !important;
+  box-shadow: inset 6px 6px 12px rgba(163, 177, 198, 0.5), inset -6px -6px 12px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell button {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: #e8edf3 !important;
+  color: #26313d !important;
+  box-shadow: 7px 7px 14px rgba(163, 177, 198, 0.58), -7px -7px 14px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell button:hover:not(:disabled) {
+  background: #e8edf3 !important;
+  color: #315f8c !important;
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 8px rgba(163, 177, 198, 0.55), -4px -4px 8px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.9) !important;
+}
+
+.neo-shell details,
+.neo-shell .rounded-lg.bg-\[\#fff9ed\],
+.neo-shell .rounded-lg.bg-\[\#f7faf6\] {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: #e8edf3 !important;
+  box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.4), inset -4px -4px 8px rgba(255, 255, 255, 0.9) !important;
+}
+
+.neo-shell .rounded-full.bg-\[\#e7f1e8\] {
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #e8edf3 !important;
+  color: #315f8c !important;
+  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.5), -5px -5px 10px rgba(255, 255, 255, 0.95) !important;
+}
+
+.neo-shell .border-\[\#efc9c4\] {
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: #f4d9d9 !important;
+  color: #8f4040 !important;
+  box-shadow: inset 4px 4px 8px rgba(177, 130, 130, 0.25), inset -4px -4px 8px rgba(255, 245, 245, 0.9) !important;
+}
+
+/* Neutralize the earlier color-cycling card rules: neumorphism uses one calm surface. */
+.neo-shell article.rounded-xl:nth-child(3n + 1),
+.neo-shell article.rounded-xl:nth-child(3n + 2),
+.neo-shell article.rounded-xl:nth-child(3n) {
+  background: #e8edf3 !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.55), -12px -12px 24px rgba(255, 255, 255, 0.95) !important;
 }
 
 .glass {
